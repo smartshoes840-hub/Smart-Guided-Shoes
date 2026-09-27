@@ -107,6 +107,7 @@
       <h2>Navigation</h2>
       <div class="row"><span>Distance remaining</span><span id="distVal">-</span></div>
       <div class="row"><span>Obstacle</span><span id="obstaclePill" class="pill ok">Clear</span></div>
+      <div class="row"><span>Raw distance</span><span id="rawDistVal">-</span></div>
       <div class="row"><span>Water</span><span id="waterPill" class="pill ok">Dry</span></div>
       <div class="row"><span>Fall alert</span><span id="fallPill" class="pill ok">None</span></div>
     </div>
@@ -267,6 +268,7 @@ function bindListeners(){
     document.getElementById('satCount').textContent = t.satellites ?? '-';
     document.getElementById('distVal').textContent = t.distanceMeters > 0 ? t.distanceMeters.toFixed(1)+' m' : '-';
     setPill('obstaclePill', t.obstacle, 'Obstacle!', 'Clear');
+    document.getElementById('rawDistVal').textContent = t.distanceCm != null ? t.distanceCm.toFixed(0)+' cm' : '-';
     setPill('waterPill', t.water, 'Water!', 'Dry');
     setPill('fallPill', t.fall, 'Fall detected!', 'None');
     document.getElementById('stepVal').textContent = t.stepsToday ?? 0;
