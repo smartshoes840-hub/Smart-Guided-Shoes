@@ -3,88 +3,106 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>Smart Shoes</title>
+<title>Smart Shoes Dashboard</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>&#128094;</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-auth-compat.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-database-compat.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <style>
-  :root{--bg:#0e0f12;--card:#17181c;--text:#eee;--muted:#8a8f98;--accent:#4CAF50;--danger:#e53935;--border:#2a2c31;}
+  :root{
+    --bg:#0b0c10; --card:#15171c; --card2:#1b1e25; --text:#f2f2f3; --muted:#8b90a0;
+    --accent:#34d399; --accent-dark:#0f3d2b; --danger:#f87171; --warn:#fbbf24; --border:#262a33;
+  }
   *{box-sizing:border-box;}
-  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,Segoe UI,Roboto,sans-serif;padding-bottom:40px;}
-  header{padding:16px;text-align:center;font-size:20px;font-weight:600;border-bottom:1px solid var(--border);}
-  .wrap{max-width:480px;margin:auto;padding:14px;}
-  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px;}
-  .card h2{margin:0 0 8px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
-  .row{display:flex;justify-content:space-between;align-items:center;margin:4px 0;font-size:15px;}
-  .pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:13px;font-weight:600;}
-  .pill.ok{background:rgba(76,175,80,.15);color:var(--accent);}
-  .pill.warn{background:rgba(229,57,53,.15);color:var(--danger);}
-  .pill.wait{background:rgba(255,193,7,.15);color:#ffc107;}
-  #map{height:280px;border-radius:10px;margin-top:8px;}
-  button,.btn{background:#2b2d33;color:var(--text);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;cursor:pointer;}
-  button:active{opacity:.7;}
-  .btn-accent{background:var(--accent);color:#08210a;border:none;font-weight:600;}
-  .btn-danger{background:var(--danger);color:#fff;border:none;}
-  .hint{color:var(--muted);font-size:13px;margin-top:6px;}
-  #arrivedModal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;padding:20px;z-index:999;}
-  #arrivedModal .box{background:var(--card);border-radius:14px;padding:22px;max-width:340px;text-align:center;}
-  input[type=text]{width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:#1e1f24;color:var(--text);margin-top:8px;}
-  .placeItem{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);}
-  #setupCard input{width:100%;padding:8px;margin:4px 0;border-radius:6px;border:1px solid var(--border);background:#1e1f24;color:var(--text);}
+  body{margin:0;font-family:'Inter',-apple-system,Segoe UI,Roboto,sans-serif;background:
+       radial-gradient(circle at top,#161a22,var(--bg) 60%);color:var(--text);padding-bottom:50px;}
+  header{padding:20px 16px 10px;text-align:center;}
+  header h1{margin:0;font-size:22px;font-weight:700;letter-spacing:-.02em;}
+  header p{margin:4px 0 0;color:var(--muted);font-size:13px;}
+  .wrap{max-width:520px;margin:auto;padding:14px;}
+  .card{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--border);
+        border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 4px 18px rgba(0,0,0,.25);}
+  .card h2{margin:0 0 10px;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:600;}
+  .row{display:flex;justify-content:space-between;align-items:center;margin:6px 0;font-size:15px;}
+  .row span:first-child{color:var(--muted);}
+  .pill{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;}
+  .pill.ok{background:rgba(52,211,153,.15);color:var(--accent);}
+  .pill.warn{background:rgba(248,113,113,.15);color:var(--danger);}
+  .pill.wait{background:rgba(251,191,36,.15);color:var(--warn);}
+  #map{height:300px;border-radius:12px;margin-top:10px;}
+  button{background:#22252d;color:var(--text);border:1px solid var(--border);border-radius:10px;
+         padding:11px 16px;font-size:14px;font-weight:600;cursor:pointer;}
+  button:active{transform:scale(.97);}
+  .btn-accent{background:var(--accent);color:#04160f;border:none;}
+  .btn-danger{background:var(--danger);color:#2a0a0a;border:none;}
+  .btn-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+  .btn-row button{flex:1;min-width:110px;}
+  .hint{color:var(--muted);font-size:13px;margin-top:8px;line-height:1.4;}
+  .big{font-size:26px;font-weight:700;}
+  #arrivedModal{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;
+                justify-content:center;padding:20px;z-index:999;}
+  #arrivedModal .box{background:var(--card2);border:1px solid var(--border);border-radius:18px;
+                      padding:26px;max-width:340px;text-align:center;}
+  input[type=text]{width:100%;padding:11px;border-radius:10px;border:1px solid var(--border);
+                    background:#101218;color:var(--text);margin-top:10px;font-size:14px;}
+  #setupCard input{width:100%;padding:10px;margin:5px 0;border-radius:8px;border:1px solid var(--border);
+                    background:#101218;color:var(--text);}
 </style>
 </head>
 <body>
 
-<header>&#128094; Smart Shoes</header>
+<header>
+  <h1>&#128094; Smart Shoes</h1>
+  <p>Live guidance dashboard</p>
+</header>
 <div class="wrap">
 
-  <!-- One-time Firebase config entry, stored locally on this phone only -->
   <div class="card" id="setupCard" style="display:none;">
-    <h2>Connect to your Firebase project</h2>
-    <div class="hint">Paste these from your Firebase project settings (see the setup guide). Stored only on this phone.</div>
-    <input type="text" id="cfgApiKey" placeholder="apiKey">
-    <input type="text" id="cfgDbUrl" placeholder="databaseURL (e.g. https://your-project-default-rtdb.firebaseio.com)">
-    <button class="btn-accent" style="margin-top:8px;width:100%;" onclick="saveConfig()">Save & Connect</button>
+    <h2>Connect to Firebase</h2>
+    <div class="hint">Paste these once (from Firebase console + your Google Maps API key). Stored only on this device.</div>
+    <input type="text" id="cfgApiKey" placeholder="Firebase apiKey">
+    <input type="text" id="cfgAuthDomain" placeholder="authDomain (e.g. your-project.firebaseapp.com)">
+    <input type="text" id="cfgDbUrl" placeholder="databaseURL (https://...firebaseio.com)">
+    <input type="text" id="cfgMapsKey" placeholder="Google Maps API key">
+    <button class="btn-accent" style="margin-top:10px;width:100%;" onclick="saveConfig()">Save & Connect</button>
   </div>
 
   <div id="appBody" style="display:none;">
 
     <div class="card">
-      <h2>GPS Status</h2>
-      <div class="row"><span>Status</span><span id="gpsPill" class="pill wait">Connecting...</span></div>
+      <h2>Status</h2>
+      <div class="row"><span>Session</span><span id="statusPill" class="pill wait">Connecting...</span></div>
+      <div class="row"><span>Message</span><span id="statusMsg">-</span></div>
       <div class="row"><span>Satellites</span><span id="satCount">-</span></div>
-      <div class="hint" id="gpsHint">Waiting for a stable GPS fix - this can take a minute outdoors.</div>
     </div>
 
     <div class="card">
-      <h2>Destination</h2>
+      <h2>Map &amp; Destination</h2>
       <div id="map"></div>
       <div class="hint">Tap the map to drop a pin, then confirm below.</div>
-      <div class="row" style="margin-top:8px;">
-        <button class="btn-accent" onclick="confirmDestination()" style="flex:1;margin-right:6px;">Set as Destination</button>
+      <div class="btn-row">
+        <button class="btn-accent" onclick="confirmDestination()">Set Destination</button>
         <button onclick="clearPickedPin()">Clear Pin</button>
       </div>
-      <div id="destInfo" class="hint" style="margin-top:8px;">No destination set yet.</div>
+      <div class="btn-row">
+        <button onclick="sendCommand('stop')">Stop</button>
+        <button class="btn-danger" onclick="sendCommand('reset')">Reset Trip</button>
+      </div>
+      <div id="destInfo" class="hint">No destination set.</div>
     </div>
 
-    <div class="card" id="navCard" style="display:none;">
+    <div class="card" id="navCard">
       <h2>Navigation</h2>
       <div class="row"><span>Distance remaining</span><span id="distVal">-</span></div>
-      <div class="row"><span>Guidance</span><span id="turnVal">-</span></div>
       <div class="row"><span>Obstacle</span><span id="obstaclePill" class="pill ok">Clear</span></div>
       <div class="row"><span>Water</span><span id="waterPill" class="pill ok">Dry</span></div>
-      <div class="row"><span>Slope</span><span id="slopeVal">-</span></div>
+      <div class="row"><span>Fall alert</span><span id="fallPill" class="pill ok">None</span></div>
     </div>
 
     <div class="card">
       <h2>Steps Today</h2>
-      <div class="row"><span id="stepDate">-</span><span id="stepVal" style="font-size:22px;font-weight:700;">0</span></div>
-    </div>
-
-    <div class="card">
-      <h2>Saved Places</h2>
-      <div id="placesList" class="hint">No saved places yet.</div>
+      <div class="row"><span>Total</span><span id="stepVal" class="big">0</span></div>
     </div>
 
   </div>
@@ -92,149 +110,96 @@
 
 <div id="arrivedModal">
   <div class="box">
-    <h3>You've arrived!</h3>
+    <h3>&#127937; You've arrived!</h3>
     <p class="hint">Save this destination for quick selection next time?</p>
     <input type="text" id="placeName" placeholder="Name this place (e.g. 'Home')">
-    <div style="margin-top:14px;">
-      <button class="btn-accent" onclick="saveArrivedPlace(true)">Save It</button>
-      <button onclick="saveArrivedPlace(false)">No Thanks</button>
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn-accent" onclick="handleArrival(true)">Save It</button>
+      <button onclick="handleArrival(false)">No Thanks</button>
     </div>
   </div>
 </div>
 
 <script>
+const DEVICE_PATH = 'devices/smartShoes01';
 let db, map, pickedMarker=null, currentMarker=null, destMarker=null, pickedLatLng=null;
-let lastArrivedShown = false;
+let arrivedShown = false, mapsLoaded = false;
 
-function dot(color){ return L.divIcon({className:'', html:`<div style="width:16px;height:16px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 0 4px rgba(0,0,0,.5);"></div>`, iconSize:[16,16], iconAnchor:[8,8]}); }
-
-function loadConfig(){
-  const cfg = localStorage.getItem('smartshoes_fb_config');
-  return cfg ? JSON.parse(cfg) : null;
-}
+function loadConfig(){ const c = localStorage.getItem('shoes_cfg'); return c ? JSON.parse(c) : null; }
 function saveConfig(){
   const apiKey = document.getElementById('cfgApiKey').value.trim();
+  const authDomain = document.getElementById('cfgAuthDomain').value.trim();
   const databaseURL = document.getElementById('cfgDbUrl').value.trim();
-  if(!apiKey || !databaseURL){ alert('Please fill in both fields.'); return; }
-  localStorage.setItem('smartshoes_fb_config', JSON.stringify({apiKey, databaseURL}));
+  const mapsKey = document.getElementById('cfgMapsKey').value.trim();
+  if(!apiKey || !databaseURL || !mapsKey){ alert('Please fill in all fields.'); return; }
+  localStorage.setItem('shoes_cfg', JSON.stringify({apiKey, authDomain, databaseURL, mapsKey}));
   location.reload();
 }
 
 function initApp(){
   const cfg = loadConfig();
-  if(!cfg){
-    document.getElementById('setupCard').style.display='block';
-    return;
-  }
-  firebase.initializeApp(cfg);
-  db = firebase.database();
-  document.getElementById('appBody').style.display='block';
-  initMap();
-  bindListeners();
+  if(!cfg){ document.getElementById('setupCard').style.display='block'; return; }
+
+  firebase.initializeApp({apiKey: cfg.apiKey, authDomain: cfg.authDomain, databaseURL: cfg.databaseURL});
+  firebase.auth().signInAnonymously().catch(e=>alert('Sign-in failed: '+e.message));
+  firebase.auth().onAuthStateChanged(user=>{
+    if(user){
+      db = firebase.database();
+      document.getElementById('appBody').style.display='block';
+      bindListeners();
+      loadGoogleMaps(cfg.mapsKey);
+    }
+  });
+}
+
+function loadGoogleMaps(key){
+  const s = document.createElement('script');
+  s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&callback=initMap`;
+  s.async = true;
+  document.head.appendChild(s);
+}
+
+function dotIcon(color){
+  return { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: color, fillOpacity: 1,
+           strokeColor: '#fff', strokeWeight: 2 };
 }
 
 function initMap(){
-  map = L.map('map', {attributionControl:true}).setView([20,0], 2);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19, attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(map);
-
-  map.on('click', function(e){
-    pickedLatLng = e.latlng;
-    if(pickedMarker) map.removeLayer(pickedMarker);
-    pickedMarker = L.marker(pickedLatLng, {icon: dot('#ffc107')}).addTo(map);
+  mapsLoaded = true;
+  map = new google.maps.Map(document.getElementById('map'), {
+    center: {lat: 20, lng: 0}, zoom: 3, disableDefaultUI: false,
+    styles: [{elementType:'geometry',stylers:[{color:'#1b1e25'}]},
+             {elementType:'labels.text.fill',stylers:[{color:'#8b90a0'}]},
+             {elementType:'labels.text.stroke',stylers:[{color:'#0b0c10'}]},
+             {featureType:'road',elementType:'geometry',stylers:[{color:'#2a2e38'}]},
+             {featureType:'water',elementType:'geometry',stylers:[{color:'#0f1420'}]}]
+  });
+  map.addListener('click', e=>{
+    pickedLatLng = e.latLng;
+    if(pickedMarker) pickedMarker.setMap(null);
+    pickedMarker = new google.maps.Marker({position: pickedLatLng, map, icon: dotIcon('#fbbf24')});
     document.getElementById('destInfo').textContent =
-      `Pin dropped at ${pickedLatLng.lat.toFixed(6)}, ${pickedLatLng.lng.toFixed(6)} - tap "Set as Destination" to confirm.`;
+      `Pin dropped at ${pickedLatLng.lat().toFixed(6)}, ${pickedLatLng.lng().toFixed(6)} - tap "Set Destination" to confirm.`;
   });
 }
 
 function clearPickedPin(){
-  if(pickedMarker){ map.removeLayer(pickedMarker); pickedMarker=null; }
+  if(pickedMarker){ pickedMarker.setMap(null); pickedMarker=null; }
   pickedLatLng = null;
-  document.getElementById('destInfo').textContent = 'No destination set yet.';
+  document.getElementById('destInfo').textContent = 'No destination set.';
+}
+
+function sendCommand(action, destination){
+  const body = { action, updatedAt: Date.now() };
+  if(destination) body.destination = destination;
+  db.ref(`${DEVICE_PATH}/command`).set(body);
 }
 
 function confirmDestination(){
   if(!pickedLatLng){ alert('Tap the map first to drop a pin.'); return; }
-  db.ref('device/destination').set({
-    lat: pickedLatLng.lat, lon: pickedLatLng.lng, set_at: Date.now()
-  });
-  document.getElementById('destInfo').textContent =
-    `Destination sent: ${pickedLatLng.lat.toFixed(6)}, ${pickedLatLng.lng.toFixed(6)}`;
-}
-
-function useSavedPlace(lat, lon, name){
-  db.ref('device/destination').set({lat, lon, name, set_at: Date.now()});
-  document.getElementById('destInfo').textContent = `Destination sent: ${name}`;
-  if(map) map.setView([lat, lon], 15);
-}
-
-function bindListeners(){
-  db.ref('device/status').on('value', snap=>{
-    const s = snap.val();
-    const pill = document.getElementById('gpsPill');
-    const hint = document.getElementById('gpsHint');
-    if(!s){ pill.textContent='No data yet'; pill.className='pill wait'; return; }
-    document.getElementById('satCount').textContent = s.satellites ?? '-';
-    if(s.state === 'waiting_gps'){ pill.textContent='Waiting for fix'; pill.className='pill wait'; hint.textContent='Must be outdoors with a clear sky view. This can take a minute.'; }
-    else if(s.state === 'gps_ready'){ pill.textContent='Fix acquired'; pill.className='pill ok'; hint.textContent='Set a destination below to start navigating.'; }
-    else if(s.state === 'navigating'){ pill.textContent='Navigating'; pill.className='pill ok'; hint.textContent=''; document.getElementById('navCard').style.display='block'; }
-    else if(s.state === 'arrived'){ pill.textContent='Arrived'; pill.className='pill ok'; showArrivedModal(); }
-  });
-
-  db.ref('device/current_location').on('value', snap=>{
-    const loc = snap.val();
-    if(!loc || !map) return;
-    const ll = [loc.lat, loc.lon];
-    if(!currentMarker){ currentMarker = L.marker(ll, {icon: dot('#2196F3')}).addTo(map); map.setView(ll, 16); }
-    else currentMarker.setLatLng(ll);
-  });
-
-  db.ref('device/destination').on('value', snap=>{
-    const d = snap.val();
-    if(!d || !map) return;
-    const ll = [d.lat, d.lon];
-    if(!destMarker) destMarker = L.marker(ll, {icon: dot('#e53935')}).addTo(map);
-    else destMarker.setLatLng(ll);
-  });
-
-  db.ref('device/telemetry').on('value', snap=>{
-    const t = snap.val();
-    if(!t) return;
-    document.getElementById('distVal').textContent = t.distance_m!=null ? t.distance_m.toFixed(1)+' m' : '-';
-    let turn = 'On course';
-    if(t.heading_diff_deg > 20) turn = 'Turn RIGHT';
-    else if(t.heading_diff_deg < -20) turn = 'Turn LEFT';
-    document.getElementById('turnVal').textContent = turn;
-    setPill('obstaclePill', t.obstacle, 'Obstacle!', 'Clear');
-    setPill('waterPill', t.water, 'Water!', 'Dry');
-    document.getElementById('slopeVal').textContent = t.slope_deg!=null ? t.slope_deg.toFixed(1)+'°' : '-';
-    if(t.arrived) showArrivedModal();
-  });
-
-  db.ref('device/steps').on('value', snap=>{
-    const s = snap.val();
-    if(!s) return;
-    document.getElementById('stepDate').textContent = s.date || '-';
-    document.getElementById('stepVal').textContent = s.count ?? 0;
-  });
-
-  db.ref('saved_places').on('value', snap=>{
-    const places = snap.val();
-    const el = document.getElementById('placesList');
-    if(!places){ el.innerHTML = 'No saved places yet.'; return; }
-    el.innerHTML = '';
-    Object.values(places).forEach(p=>{
-      const div = document.createElement('div');
-      div.className = 'placeItem';
-      div.innerHTML = `<span>${p.name}</span>`;
-      const btn = document.createElement('button');
-      btn.textContent = 'Go here';
-      btn.onclick = ()=>useSavedPlace(p.lat, p.lon, p.name);
-      div.appendChild(btn);
-      el.appendChild(div);
-    });
-  });
+  const dest = { lat: pickedLatLng.lat(), lng: pickedLatLng.lng() };
+  sendCommand('start', dest);
+  document.getElementById('destInfo').textContent = `Destination sent: ${dest.lat.toFixed(6)}, ${dest.lng.toFixed(6)}`;
 }
 
 function setPill(id, alert, warnText, okText){
@@ -243,26 +208,69 @@ function setPill(id, alert, warnText, okText){
   el.className = 'pill ' + (alert ? 'warn' : 'ok');
 }
 
+function bindListeners(){
+  db.ref(`${DEVICE_PATH}/session`).on('value', snap=>{
+    const s = snap.val();
+    if(!s) return;
+    const pill = document.getElementById('statusPill');
+    const labels = {waiting_for_gps:['Waiting for GPS','wait'], position_locked:['Position locked','ok'],
+      destination_selected:['Destination set','ok'], navigating:['Navigating','ok'],
+      arrived:['Arrived','ok'], stopped:['Stopped','wait']};
+    const [text, cls] = labels[s.status] || [s.status, 'wait'];
+    pill.textContent = text; pill.className = 'pill ' + cls;
+    document.getElementById('statusMsg').textContent = s.message || '-';
+
+    if(mapsLoaded && s.start){
+      const p = {lat: s.start.lat, lng: s.start.lng};
+      if(!map.getCenter || map.getZoom() <= 3) map.setCenter(p);
+    }
+    if(mapsLoaded && s.destination){
+      const p = {lat: s.destination.lat, lng: s.destination.lng};
+      if(!destMarker) destMarker = new google.maps.Marker({position:p, map, icon: dotIcon('#f87171')});
+      else destMarker.setPosition(p);
+    } else if(destMarker){
+      destMarker.setMap(null); destMarker = null;
+    }
+
+    if(s.arrival) showArrivedModal();
+  });
+
+  db.ref(`${DEVICE_PATH}/telemetry`).on('value', snap=>{
+    const t = snap.val();
+    if(!t) return;
+    document.getElementById('satCount').textContent = t.satellites ?? '-';
+    document.getElementById('distVal').textContent = t.distanceMeters > 0 ? t.distanceMeters.toFixed(1)+' m' : '-';
+    setPill('obstaclePill', t.obstacle, 'Obstacle!', 'Clear');
+    setPill('waterPill', t.water, 'Water!', 'Dry');
+    setPill('fallPill', t.fall, 'Fall detected!', 'None');
+    document.getElementById('stepVal').textContent = t.stepsToday ?? 0;
+
+    if(mapsLoaded && t.gpsFix && t.latitude){
+      const p = {lat: t.latitude, lng: t.longitude};
+      if(!currentMarker){ currentMarker = new google.maps.Marker({position:p, map, icon: dotIcon('#3b82f6')}); map.setCenter(p); map.setZoom(17); }
+      else currentMarker.setPosition(p);
+    }
+  });
+}
+
 function showArrivedModal(){
-  if(lastArrivedShown) return;
-  lastArrivedShown = true;
+  if(arrivedShown) return;
+  arrivedShown = true;
   document.getElementById('arrivedModal').style.display = 'flex';
 }
 
-function saveArrivedPlace(shouldSave){
+function handleArrival(shouldSave){
   if(shouldSave){
     const name = document.getElementById('placeName').value.trim() || 'Unnamed place';
-    db.ref('device/destination').once('value').then(snap=>{
+    db.ref(`${DEVICE_PATH}/session/destination`).once('value').then(snap=>{
       const d = snap.val();
-      if(d){
-        db.ref('saved_places').push({name, lat: d.lat, lon: d.lon, added_at: Date.now()});
-      }
+      if(d) db.ref('savedPlaces').push({name, lat:d.lat, lng:d.lng, added_at: Date.now()});
     });
   }
   document.getElementById('arrivedModal').style.display = 'none';
   document.getElementById('placeName').value = '';
-  db.ref('device/destination').remove();
-  lastArrivedShown = false;
+  arrivedShown = false;
+  sendCommand('reset'); // per this firmware's state machine, a new trip needs reset -> re-lock GPS -> start
 }
 
 initApp();
