@@ -106,6 +106,10 @@
     <div class="card" id="navCard">
       <h2>Navigation</h2>
       <div class="row"><span>Distance remaining</span><span id="distVal">-</span></div>
+      <div class="row"><span>Destination set?</span><span id="destValidVal">-</span></div>
+      <div class="row"><span>GPS speed</span><span id="speedVal">-</span></div>
+      <div class="row"><span>GPS course valid?</span><span id="courseValidVal">-</span></div>
+      <div class="row"><span>Heading error</span><span id="headingErrVal">-</span></div>
       <div class="row"><span>Obstacle</span><span id="obstaclePill" class="pill ok">Clear</span></div>
       <div class="row"><span>Raw distance</span><span id="rawDistVal">-</span></div>
       <div class="row"><span>Water</span><span id="waterPill" class="pill ok">Dry</span></div>
@@ -267,6 +271,10 @@ function bindListeners(){
     if(!t) return;
     document.getElementById('satCount').textContent = t.satellites ?? '-';
     document.getElementById('distVal').textContent = t.distanceMeters > 0 ? t.distanceMeters.toFixed(1)+' m' : '-';
+    document.getElementById('destValidVal').textContent = t.destinationValid ? 'Yes' : 'No';
+    document.getElementById('speedVal').textContent = t.gpsSpeedKmh != null && t.gpsSpeedKmh >= 0 ? t.gpsSpeedKmh.toFixed(1)+' km/h' : '-';
+    document.getElementById('courseValidVal').textContent = t.gpsCourseValid ? 'Yes' : 'No (need to be moving)';
+    document.getElementById('headingErrVal').textContent = t.headingErrorDeg != null ? t.headingErrorDeg.toFixed(0)+'°' : '-';
     setPill('obstaclePill', t.obstacle, 'Obstacle!', 'Clear');
     document.getElementById('rawDistVal').textContent = t.distanceCm != null ? t.distanceCm.toFixed(0)+' cm' : '-';
     setPill('waterPill', t.water, 'Water!', 'Dry');
