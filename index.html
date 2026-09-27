@@ -78,12 +78,23 @@
     </div>
 
     <div class="card">
+      <h2>Search Destination</h2>
+      <input type="text" id="searchInput" placeholder="Type an address or place name...">
+      <div class="hint">Or tap directly on the map below to drop a pin instead.</div>
+    </div>
+
+    <div class="card">
       <h2>Map &amp; Destination</h2>
       <div id="map"></div>
       <div class="hint">Tap the map to drop a pin, then confirm below.</div>
       <div class="btn-row">
         <button class="btn-accent" onclick="confirmDestination()">Set Destination</button>
         <button onclick="clearPickedPin()">Clear Pin</button>
+      </div>
+      <div class="btn-row">
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);flex:1;">
+          <input type="checkbox" id="followToggle" checked style="width:auto;"> Follow my location
+        </label>
       </div>
       <div class="btn-row">
         <button onclick="sendCommand('stop')">Stop</button>
@@ -154,7 +165,7 @@ function initApp(){
 
 function loadGoogleMaps(key){
   const s = document.createElement('script');
-  s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&callback=initMap`;
+  s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&callback=initMap`;
   s.async = true;
   document.head.appendChild(s);
 }
@@ -180,6 +191,21 @@ function initMap(){
     pickedMarker = new google.maps.Marker({position: pickedLatLng, map, icon: dotIcon('#fbbf24')});
     document.getElementById('destInfo').textContent =
       `Pin dropped at ${pickedLatLng.lat().toFixed(6)}, ${pickedLatLng.lng().toFixed(6)} - tap "Set Destination" to confirm.`;
+  });
+
+  const searchInput = document.getElementById('searchInput');
+  const autocomplete = new google.maps.places.Autocomplete(searchInput);
+  autocomplete.bindTo('bounds', map);
+  autocomplete.addListener('place_changed', ()=>{
+    const place = autocomplete.getPlace();
+    if(!place.geometry || !place.geometry.location) return;
+    pickedLatLng = place.geometry.location;
+    if(pickedMarker) pickedMarker.setMap(null);
+    pickedMarker = new google.maps.Marker({position: pickedLatLng, map, icon: dotIcon('#fbbf24')});
+    map.setCenter(pickedLatLng);
+    map.setZoom(16);
+    document.getElementById('destInfo').textContent =
+      `Selected: ${place.formatted_address || place.name} - tap "Set Destination" to confirm.`;
   });
 }
 
@@ -247,8 +273,13 @@ function bindListeners(){
 
     if(mapsLoaded && t.gpsFix && t.latitude){
       const p = {lat: t.latitude, lng: t.longitude};
-      if(!currentMarker){ currentMarker = new google.maps.Marker({position:p, map, icon: dotIcon('#3b82f6')}); map.setCenter(p); map.setZoom(17); }
-      else currentMarker.setPosition(p);
+      if(!currentMarker){
+        currentMarker = new google.maps.Marker({position:p, map, icon: dotIcon('#3b82f6'), zIndex: 999});
+        map.setCenter(p); map.setZoom(17);
+      } else {
+        currentMarker.setPosition(p);
+        if(document.getElementById('followToggle').checked) map.panTo(p);
+      }
     }
   });
 }
