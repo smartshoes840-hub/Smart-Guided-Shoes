@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Smart Shoes</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>&#128094;</text></svg>">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-database-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<style>
+  :root{--bg:#0e0f12;--card:#17181c;--text:#eee;--muted:#8a8f98;--accent:#4CAF50;--danger:#e53935;--border:#2a2c31;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,Segoe UI,Roboto,sans-serif;padding-bottom:40px;}
+  header{padding:16px;text-align:center;font-size:20px;font-weight:600;border-bottom:1px solid var(--border);}
+  .wrap{max-width:480px;margin:auto;padding:14px;}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px;}
+  .card h2{margin:0 0 8px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+  .row{display:flex;justify-content:space-between;align-items:center;margin:4px 0;font-size:15px;}
+  .pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:13px;font-weight:600;}
+  .pill.ok{background:rgba(76,175,80,.15);color:var(--accent);}
+  .pill.warn{background:rgba(229,57,53,.15);color:var(--danger);}
+  .pill.wait{background:rgba(255,193,7,.15);color:#ffc107;}
+  #map{height:280px;border-radius:10px;margin-top:8px;}
+  button,.btn{background:#2b2d33;color:var(--text);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;cursor:pointer;}
+  button:active{opacity:.7;}
+  .btn-accent{background:var(--accent);color:#08210a;border:none;font-weight:600;}
+  .btn-danger{background:var(--danger);color:#fff;border:none;}
+  .hint{color:var(--muted);font-size:13px;margin-top:6px;}
+  #arrivedModal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;padding:20px;z-index:999;}
+  #arrivedModal .box{background:var(--card);border-radius:14px;padding:22px;max-width:340px;text-align:center;}
+  input[type=text]{width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:#1e1f24;color:var(--text);margin-top:8px;}
+  .placeItem{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);}
+  #setupCard input{width:100%;padding:8px;margin:4px 0;border-radius:6px;border:1px solid var(--border);background:#1e1f24;color:var(--text);}
+</style>
+</head>
+<body>
+
+<header>&#128094; Smart Shoes</header>
+<div class="wrap">
+
+  <!-- One-time Firebase config entry, stored locally on this phone only -->
+  <div class="card" id="setupCard" style="display:none;">
+    <h2>Connect to your Firebase project</h2>
+    <div class="hint">Paste these from your Firebase project settings (see the setup guide). Stored only on this phone.</div>
+    <input type="text" id="cfgApiKey" placeholder="apiKey">
+    <input type="text" id="cfgDbUrl" placeholder="databaseURL (e.g. https://your-project-default-rtdb.firebaseio.com)">
+    <button class="btn-accent" style="margin-top:8px;width:100%;" onclick="saveConfig()">Save & Connect</button>
+  </div>
+
+  <div id="appBody" style="display:none;">
+
+    <div class="card">
+      <h2>GPS Status</h2>
+      <div class="row"><span>Status</span><span id="gpsPill" class="pill wait">Connecting...</span></div>
+      <div class="row"><span>Satellites</span><span id="satCount">-</span></div>
+      <div class="hint" id="gpsHint">Waiting for a stable GPS fix - this can take a minute outdoors.</div>
+    </div>
+
+    <div class="card">
+      <h2>Destination</h2>
+      <div id="map"></div>
+      <div class="hint">Tap the map to drop a pin, then confirm below.</div>
+      <div class="row" style="margin-top:8px;">
+        <button class="btn-accent" onclick="confirmDestination()" style="flex:1;margin-right:6px;">Set as Destination</button>
+        <button onclick="clearPickedPin()">Clear Pin</button>
+      </div>
+      <div id="destInfo" class="hint" style="margin-top:8px;">No destination set yet.</div>
+    </div>
+
+    <div class="card" id="navCard" style="display:none;">
+      <h2>Navigation</h2>
+      <div class="row"><span>Distance remaining</span><span id="distVal">-</span></div>
+      <div class="row"><span>Guidance</span><span id="turnVal">-</span></div>
+      <div class="row"><span>Obstacle</span><span id="obstaclePill" class="pill ok">Clear</span></div>
+      <div class="row"><span>Water</span><span id="waterPill" class="pill ok">Dry</span></div>
+      <div class="row"><span>Slope</span><span id="slopeVal">-</span></div>
+    </div>
+
+    <div class="card">
+      <h2>Steps Today</h2>
+      <div class="row"><span id="stepDate">-</span><span id="stepVal" style="font-size:22px;font-weight:700;">0</span></div>
+    </div>
+
+    <div class="card">
+      <h2>Saved Places</h2>
+      <div id="placesList" class="hint">No saved places yet.</div>
+    </div>
+
+  </div>
+</div>
+
+<div id="arrivedModal">
+  <div class="box">
+    <h3>You've arrived!</h3>
+    <p class="hint">Save this destination for quick selection next time?</p>
+    <input type="text" id="placeName" placeholder="Name this place (e.g. 'Home')">
+    <div style="margin-top:14px;">
+      <button class="btn-accent" onclick="saveArrivedPlace(true)">Save It</button>
+      <button onclick="saveArrivedPlace(false)">No Thanks</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let db, map, pickedMarker=null, currentMarker=null, destMarker=null, pickedLatLng=null;
+let lastArrivedShown = false;
+
+function dot(color){ return L.divIcon({className:'', html:`<div style="width:16px;height:16px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 0 4px rgba(0,0,0,.5);"></div>`, iconSize:[16,16], iconAnchor:[8,8]}); }
+
+function loadConfig(){
+  const cfg = localStorage.getItem('smartshoes_fb_config');
+  return cfg ? JSON.parse(cfg) : null;
+}
+function saveConfig(){
+  const apiKey = document.getElementById('cfgApiKey').value.trim();
+  const databaseURL = document.getElementById('cfgDbUrl').value.trim();
+  if(!apiKey || !databaseURL){ alert('Please fill in both fields.'); return; }
+  localStorage.setItem('smartshoes_fb_config', JSON.stringify({apiKey, databaseURL}));
+  location.reload();
+}
+
+function initApp(){
+  const cfg = loadConfig();
+  if(!cfg){
+    document.getElementById('setupCard').style.display='block';
+    return;
+  }
+  firebase.initializeApp(cfg);
+  db = firebase.database();
+  document.getElementById('appBody').style.display='block';
+  initMap();
+  bindListeners();
+}
+
+function initMap(){
+  map = L.map('map', {attributionControl:true}).setView([20,0], 2);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19, attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  map.on('click', function(e){
+    pickedLatLng = e.latlng;
+    if(pickedMarker) map.removeLayer(pickedMarker);
+    pickedMarker = L.marker(pickedLatLng, {icon: dot('#ffc107')}).addTo(map);
+    document.getElementById('destInfo').textContent =
+      `Pin dropped at ${pickedLatLng.lat.toFixed(6)}, ${pickedLatLng.lng.toFixed(6)} - tap "Set as Destination" to confirm.`;
+  });
+}
+
+function clearPickedPin(){
+  if(pickedMarker){ map.removeLayer(pickedMarker); pickedMarker=null; }
+  pickedLatLng = null;
+  document.getElementById('destInfo').textContent = 'No destination set yet.';
+}
+
+function confirmDestination(){
+  if(!pickedLatLng){ alert('Tap the map first to drop a pin.'); return; }
+  db.ref('device/destination').set({
+    lat: pickedLatLng.lat, lon: pickedLatLng.lng, set_at: Date.now()
+  });
+  document.getElementById('destInfo').textContent =
+    `Destination sent: ${pickedLatLng.lat.toFixed(6)}, ${pickedLatLng.lng.toFixed(6)}`;
+}
+
+function useSavedPlace(lat, lon, name){
+  db.ref('device/destination').set({lat, lon, name, set_at: Date.now()});
+  document.getElementById('destInfo').textContent = `Destination sent: ${name}`;
+  if(map) map.setView([lat, lon], 15);
+}
+
+function bindListeners(){
+  db.ref('device/status').on('value', snap=>{
+    const s = snap.val();
+    const pill = document.getElementById('gpsPill');
+    const hint = document.getElementById('gpsHint');
+    if(!s){ pill.textContent='No data yet'; pill.className='pill wait'; return; }
+    document.getElementById('satCount').textContent = s.satellites ?? '-';
+    if(s.state === 'waiting_gps'){ pill.textContent='Waiting for fix'; pill.className='pill wait'; hint.textContent='Must be outdoors with a clear sky view. This can take a minute.'; }
+    else if(s.state === 'gps_ready'){ pill.textContent='Fix acquired'; pill.className='pill ok'; hint.textContent='Set a destination below to start navigating.'; }
+    else if(s.state === 'navigating'){ pill.textContent='Navigating'; pill.className='pill ok'; hint.textContent=''; document.getElementById('navCard').style.display='block'; }
+    else if(s.state === 'arrived'){ pill.textContent='Arrived'; pill.className='pill ok'; showArrivedModal(); }
+  });
+
+  db.ref('device/current_location').on('value', snap=>{
+    const loc = snap.val();
+    if(!loc || !map) return;
+    const ll = [loc.lat, loc.lon];
+    if(!currentMarker){ currentMarker = L.marker(ll, {icon: dot('#2196F3')}).addTo(map); map.setView(ll, 16); }
+    else currentMarker.setLatLng(ll);
+  });
+
+  db.ref('device/destination').on('value', snap=>{
+    const d = snap.val();
+    if(!d || !map) return;
+    const ll = [d.lat, d.lon];
+    if(!destMarker) destMarker = L.marker(ll, {icon: dot('#e53935')}).addTo(map);
+    else destMarker.setLatLng(ll);
+  });
+
+  db.ref('device/telemetry').on('value', snap=>{
+    const t = snap.val();
+    if(!t) return;
+    document.getElementById('distVal').textContent = t.distance_m!=null ? t.distance_m.toFixed(1)+' m' : '-';
+    let turn = 'On course';
+    if(t.heading_diff_deg > 20) turn = 'Turn RIGHT';
+    else if(t.heading_diff_deg < -20) turn = 'Turn LEFT';
+    document.getElementById('turnVal').textContent = turn;
+    setPill('obstaclePill', t.obstacle, 'Obstacle!', 'Clear');
+    setPill('waterPill', t.water, 'Water!', 'Dry');
+    document.getElementById('slopeVal').textContent = t.slope_deg!=null ? t.slope_deg.toFixed(1)+'°' : '-';
+    if(t.arrived) showArrivedModal();
+  });
+
+  db.ref('device/steps').on('value', snap=>{
+    const s = snap.val();
+    if(!s) return;
+    document.getElementById('stepDate').textContent = s.date || '-';
+    document.getElementById('stepVal').textContent = s.count ?? 0;
+  });
+
+  db.ref('saved_places').on('value', snap=>{
+    const places = snap.val();
+    const el = document.getElementById('placesList');
+    if(!places){ el.innerHTML = 'No saved places yet.'; return; }
+    el.innerHTML = '';
+    Object.values(places).forEach(p=>{
+      const div = document.createElement('div');
+      div.className = 'placeItem';
+      div.innerHTML = `<span>${p.name}</span>`;
+      const btn = document.createElement('button');
+      btn.textContent = 'Go here';
+      btn.onclick = ()=>useSavedPlace(p.lat, p.lon, p.name);
+      div.appendChild(btn);
+      el.appendChild(div);
+    });
+  });
+}
+
+function setPill(id, alert, warnText, okText){
+  const el = document.getElementById(id);
+  el.textContent = alert ? warnText : okText;
+  el.className = 'pill ' + (alert ? 'warn' : 'ok');
+}
+
+function showArrivedModal(){
+  if(lastArrivedShown) return;
+  lastArrivedShown = true;
+  document.getElementById('arrivedModal').style.display = 'flex';
+}
+
+function saveArrivedPlace(shouldSave){
+  if(shouldSave){
+    const name = document.getElementById('placeName').value.trim() || 'Unnamed place';
+    db.ref('device/destination').once('value').then(snap=>{
+      const d = snap.val();
+      if(d){
+        db.ref('saved_places').push({name, lat: d.lat, lon: d.lon, added_at: Date.now()});
+      }
+    });
+  }
+  document.getElementById('arrivedModal').style.display = 'none';
+  document.getElementById('placeName').value = '';
+  db.ref('device/destination').remove();
+  lastArrivedShown = false;
+}
+
+initApp();
+</script>
+</body>
+</html>
