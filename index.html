@@ -2,319 +2,2427 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>Smart Shoes Dashboard</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>&#128094;</text></svg>">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Smart Guided Shoes</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f3f6fa;
+    color: #1f2937;
+}
+
+header {
+    background: #111827;
+    color: white;
+    padding: 16px 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 22px;
+}
+
+#connectionStatus {
+    padding: 7px 12px;
+    border-radius: 20px;
+    background: #6b7280;
+    font-size: 13px;
+}
+
+.container {
+    padding: 15px;
+    max-width: 1500px;
+    margin: auto;
+}
+
+.top-grid {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 15px;
+}
+
+.card {
+    background: white;
+    border-radius: 12px;
+    padding: 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    margin-bottom: 15px;
+}
+
+.card h2 {
+    margin-top: 0;
+    font-size: 18px;
+}
+
+input {
+    width: 100%;
+    padding: 11px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+button {
+    border: none;
+    border-radius: 8px;
+    padding: 11px 14px;
+    cursor: pointer;
+    font-weight: bold;
+    margin: 3px;
+}
+
+.primary {
+    background: #2563eb;
+    color: white;
+}
+
+.success {
+    background: #16a34a;
+    color: white;
+}
+
+.danger {
+    background: #dc2626;
+    color: white;
+}
+
+.secondary {
+    background: #e5e7eb;
+    color: #111827;
+}
+
+button:hover {
+    opacity: 0.88;
+}
+
+#map {
+    width: 100%;
+    height: 650px;
+    border-radius: 10px;
+}
+
+.status-box {
+    padding: 12px;
+    border-radius: 8px;
+    background: #f3f4f6;
+    margin-bottom: 10px;
+}
+
+.status-title {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.status-value {
+    font-size: 18px;
+    font-weight: bold;
+    margin-top: 4px;
+}
+
+.metric-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.metric {
+    background: #f9fafb;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.metric small {
+    color: #6b7280;
+}
+
+.metric strong {
+    display: block;
+    margin-top: 3px;
+}
+
+.navigation-box {
+    text-align: center;
+    padding: 18px;
+    border-radius: 10px;
+    background: #eff6ff;
+    margin-bottom: 12px;
+}
+
+.direction {
+    font-size: 34px;
+    font-weight: bold;
+    color: #1d4ed8;
+}
+
+.instruction {
+    margin-top: 8px;
+    font-size: 17px;
+}
+
+.warning {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.good {
+    background: #dcfce7;
+    color: #166534;
+}
+
+#stepsList {
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.step-item {
+    padding: 9px;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 13px;
+}
+
+.active-step {
+    background: #dbeafe;
+    font-weight: bold;
+}
+
+.saved-place {
+    display: flex;
+    justify-content: space-between;
+    padding: 9px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: white;
+    width: 90%;
+    max-width: 450px;
+    padding: 22px;
+    border-radius: 12px;
+}
+
+@media(max-width: 900px) {
+    .top-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #map {
+        height: 500px;
+    }
+}
+</style>
+
+<!-- Firebase -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-app-compat.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-auth-compat.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-database-compat.min.js"></script>
-<style>
-  :root{
-    --bg:#0b0c10; --card:#15171c; --card2:#1b1e25; --text:#f2f2f3; --muted:#8b90a0;
-    --accent:#34d399; --accent-dark:#0f3d2b; --danger:#f87171; --warn:#fbbf24; --border:#262a33;
-  }
-  *{box-sizing:border-box;}
-  body{margin:0;font-family:'Inter',-apple-system,Segoe UI,Roboto,sans-serif;background:
-       radial-gradient(circle at top,#161a22,var(--bg) 60%);color:var(--text);padding-bottom:50px;}
-  header{padding:20px 16px 10px;text-align:center;}
-  header h1{margin:0;font-size:22px;font-weight:700;letter-spacing:-.02em;}
-  header p{margin:4px 0 0;color:var(--muted);font-size:13px;}
-  .wrap{max-width:520px;margin:auto;padding:14px;}
-  .card{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--border);
-        border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 4px 18px rgba(0,0,0,.25);}
-  .card h2{margin:0 0 10px;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:600;}
-  .row{display:flex;justify-content:space-between;align-items:center;margin:6px 0;font-size:15px;}
-  .row span:first-child{color:var(--muted);}
-  .pill{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;}
-  .pill.ok{background:rgba(52,211,153,.15);color:var(--accent);}
-  .pill.warn{background:rgba(248,113,113,.15);color:var(--danger);}
-  .pill.wait{background:rgba(251,191,36,.15);color:var(--warn);}
-  #map{height:300px;border-radius:12px;margin-top:10px;}
-  button{background:#22252d;color:var(--text);border:1px solid var(--border);border-radius:10px;
-         padding:11px 16px;font-size:14px;font-weight:600;cursor:pointer;}
-  button:active{transform:scale(.97);}
-  .btn-accent{background:var(--accent);color:#04160f;border:none;}
-  .btn-danger{background:var(--danger);color:#2a0a0a;border:none;}
-  .btn-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
-  .btn-row button{flex:1;min-width:110px;}
-  .hint{color:var(--muted);font-size:13px;margin-top:8px;line-height:1.4;}
-  .big{font-size:26px;font-weight:700;}
-  #arrivedModal{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;
-                justify-content:center;padding:20px;z-index:999;}
-  #arrivedModal .box{background:var(--card2);border:1px solid var(--border);border-radius:18px;
-                      padding:26px;max-width:340px;text-align:center;}
-  input[type=text]{width:100%;padding:11px;border-radius:10px;border:1px solid var(--border);
-                    background:#101218;color:var(--text);margin-top:10px;font-size:14px;}
-  #setupCard input{width:100%;padding:10px;margin:5px 0;border-radius:8px;border:1px solid var(--border);
-                    background:#101218;color:var(--text);}
-</style>
+
 </head>
+
 <body>
 
 <header>
-  <h1>&#128094; Smart Shoes</h1>
-  <p>Live guidance dashboard</p>
+    <h1>🦶 Smart Guided Shoes</h1>
+    <div id="connectionStatus">Connecting...</div>
 </header>
-<div class="wrap">
 
-  <div class="card" id="setupCard" style="display:none;">
-    <h2>Connect to Firebase</h2>
-    <div class="hint">Paste these once (from Firebase console + your Google Maps API key). Stored only on this device.</div>
-    <input type="text" id="cfgApiKey" placeholder="Firebase apiKey">
-    <input type="text" id="cfgAuthDomain" placeholder="authDomain (e.g. your-project.firebaseapp.com)">
-    <input type="text" id="cfgDbUrl" placeholder="databaseURL (https://...firebaseio.com)">
-    <input type="text" id="cfgMapsKey" placeholder="Google Maps API key">
-    <button class="btn-accent" style="margin-top:10px;width:100%;" onclick="saveConfig()">Save & Connect</button>
-  </div>
+<div class="container">
 
-  <div id="appBody" style="display:none;">
+<div class="top-grid">
+
+<!-- LEFT PANEL -->
+<div>
 
     <div class="card">
-      <h2>Status</h2>
-      <div class="row"><span>Session</span><span id="statusPill" class="pill wait">Connecting...</span></div>
-      <div class="row"><span>Message</span><span id="statusMsg">-</span></div>
-      <div class="row"><span>Satellites</span><span id="satCount">-</span></div>
+
+        <h2>Destination</h2>
+
+        <input
+            id="destinationSearch"
+            type="text"
+            placeholder="Search destination..."
+        >
+
+        <button class="primary" onclick="useSelectedDestination()">
+            Set Destination
+        </button>
+
+        <button class="secondary" onclick="clearDestination()">
+            Clear
+        </button>
+
+        <div id="destinationStatus" class="status-box">
+            <div class="status-title">Destination</div>
+            <div id="destinationText" class="status-value">
+                Not selected
+            </div>
+        </div>
+
     </div>
+
 
     <div class="card">
-      <h2>Search Destination</h2>
-      <input type="text" id="searchInput" placeholder="Type an address or place name...">
-      <div class="hint">Or tap directly on the map below to drop a pin instead.</div>
+
+        <h2>Navigation</h2>
+
+        <div id="navigationBox" class="navigation-box">
+
+            <div id="direction" class="direction">
+                WAIT
+            </div>
+
+            <div id="instruction" class="instruction">
+                Waiting for GPS and destination
+            </div>
+
+            <div id="turnDistance">
+                —
+            </div>
+
+        </div>
+
+        <button class="danger" onclick="stopNavigation()">
+            STOP NAVIGATION
+        </button>
+
+        <button class="secondary" onclick="resetNavigation()">
+            RESET
+        </button>
+
     </div>
+
 
     <div class="card">
-      <h2>Map &amp; Destination</h2>
-      <div id="map"></div>
-      <div class="hint">Tap the map to drop a pin, then confirm below.</div>
-      <div class="btn-row">
-        <button class="btn-accent" onclick="confirmDestination()">Set Destination</button>
-        <button onclick="clearPickedPin()">Clear Pin</button>
-      </div>
-      <div class="btn-row">
-        <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);flex:1;">
-          <input type="checkbox" id="followToggle" checked style="width:auto;"> Follow my location
-        </label>
-      </div>
-      <div class="btn-row">
-        <button onclick="sendCommand('stop')">Stop</button>
-        <button class="btn-danger" onclick="sendCommand('reset')">Reset Trip</button>
-      </div>
-      <div id="destInfo" class="hint">No destination set.</div>
+
+        <h2>Safety</h2>
+
+        <div id="obstacleBox" class="status-box">
+            <div class="status-title">Obstacle</div>
+            <div id="obstacleStatus" class="status-value">
+                Clear
+            </div>
+        </div>
+
+        <div id="waterBox" class="status-box">
+            <div class="status-title">Water</div>
+            <div id="waterStatus" class="status-value">
+                Dry
+            </div>
+        </div>
+
+        <div id="fallBox" class="status-box">
+            <div class="status-title">Fall Detection</div>
+            <div id="fallStatus" class="status-value">
+                Normal
+            </div>
+        </div>
+
     </div>
 
-    <div class="card" id="navCard">
-      <h2>Navigation</h2>
-      <div class="row"><span>Distance remaining</span><span id="distVal">-</span></div>
-      <div class="row"><span>Destination set?</span><span id="destValidVal">-</span></div>
-      <div class="row"><span>GPS speed</span><span id="speedVal">-</span></div>
-      <div class="row"><span>GPS course valid?</span><span id="courseValidVal">-</span></div>
-      <div class="row"><span>Heading error</span><span id="headingErrVal">-</span></div>
-      <div class="row"><span>Obstacle</span><span id="obstaclePill" class="pill ok">Clear</span></div>
-      <div class="row"><span>Raw distance</span><span id="rawDistVal">-</span></div>
-      <div class="row"><span>Water</span><span id="waterPill" class="pill ok">Dry</span></div>
-      <div class="row"><span>Fall alert</span><span id="fallPill" class="pill ok">None</span></div>
-    </div>
 
     <div class="card">
-      <h2>Steps Today</h2>
-      <div class="row"><span>Total</span><span id="stepVal" class="big">0</span></div>
+
+        <h2>Live Telemetry</h2>
+
+        <div class="metric-grid">
+
+            <div class="metric">
+                <small>GPS</small>
+                <strong id="gpsStatus">Waiting</strong>
+            </div>
+
+            <div class="metric">
+                <small>Satellites</small>
+                <strong id="satellites">0</strong>
+            </div>
+
+            <div class="metric">
+                <small>Latitude</small>
+                <strong id="latitude">—</strong>
+            </div>
+
+            <div class="metric">
+                <small>Longitude</small>
+                <strong id="longitude">—</strong>
+            </div>
+
+            <div class="metric">
+                <small>Speed</small>
+                <strong id="speed">0 km/h</strong>
+            </div>
+
+            <div class="metric">
+                <small>Distance</small>
+                <strong id="destinationDistance">—</strong>
+            </div>
+
+            <div class="metric">
+                <small>Obstacle Distance</small>
+                <strong id="obstacleDistance">—</strong>
+            </div>
+
+            <div class="metric">
+                <small>Steps Today</small>
+                <strong id="steps">0</strong>
+            </div>
+
+        </div>
+
     </div>
 
-  </div>
+
+    <div class="card">
+
+        <h2>Route Instructions</h2>
+
+        <div id="stepsList">
+            No route loaded.
+        </div>
+
+    </div>
+
+
+    <div class="card">
+
+        <h2>Saved Places</h2>
+
+        <div id="savedPlaces">
+            No saved places.
+        </div>
+
+    </div>
+
 </div>
 
-<div id="arrivedModal">
-  <div class="box">
-    <h3>&#127937; You've arrived!</h3>
-    <p class="hint">Save this destination for quick selection next time?</p>
-    <input type="text" id="placeName" placeholder="Name this place (e.g. 'Home')">
-    <div class="btn-row" style="margin-top:14px;">
-      <button class="btn-accent" onclick="handleArrival(true)">Save It</button>
-      <button onclick="handleArrival(false)">No Thanks</button>
-    </div>
-  </div>
+
+<!-- MAP -->
+<div class="card">
+
+    <h2>Live Navigation Map</h2>
+
+    <div id="map"></div>
+
 </div>
+
+</div>
+
+</div>
+
+
+<!-- ARRIVAL MODAL -->
+
+<div id="arrivalModal" class="modal">
+
+    <div class="modal-content">
+
+        <h2>🎉 Destination Reached</h2>
+
+        <p id="arrivalMessage">
+            You have reached your destination.
+        </p>
+
+        <input
+            id="savePlaceName"
+            type="text"
+            placeholder="Name this place"
+        >
+
+        <button class="success" onclick="saveArrivalPlace()">
+            Save Destination
+        </button>
+
+        <button class="secondary" onclick="closeArrivalModal()">
+            Don't Save
+        </button>
+
+    </div>
+
+</div>
+
 
 <script>
-const DEVICE_PATH = 'devices/smartShoes01';
-let db, map, pickedMarker=null, currentMarker=null, destMarker=null, pickedLatLng=null;
-let arrivedShown = false, mapsLoaded = false;
 
-function loadConfig(){ const c = localStorage.getItem('shoes_cfg'); return c ? JSON.parse(c) : null; }
-function saveConfig(){
-  const apiKey = document.getElementById('cfgApiKey').value.trim();
-  const authDomain = document.getElementById('cfgAuthDomain').value.trim();
-  const databaseURL = document.getElementById('cfgDbUrl').value.trim();
-  const mapsKey = document.getElementById('cfgMapsKey').value.trim();
-  if(!apiKey || !databaseURL || !mapsKey){ alert('Please fill in all fields.'); return; }
-  localStorage.setItem('shoes_cfg', JSON.stringify({apiKey, authDomain, databaseURL, mapsKey}));
-  location.reload();
-}
+/* ============================================================
+   FIREBASE CONFIGURATION
+   ============================================================
 
-function initApp(){
-  const cfg = loadConfig();
-  if(!cfg){ document.getElementById('setupCard').style.display='block'; return; }
+   IMPORTANT:
+   Replace ONLY the values marked PASTE_...
 
-  firebase.initializeApp({apiKey: cfg.apiKey, authDomain: cfg.authDomain, databaseURL: cfg.databaseURL});
-  firebase.auth().signInAnonymously().catch(e=>alert('Sign-in failed: '+e.message));
-  firebase.auth().onAuthStateChanged(user=>{
-    if(user){
-      db = firebase.database();
-      document.getElementById('appBody').style.display='block';
-      bindListeners();
-      loadGoogleMaps(cfg.mapsKey);
+   Get these from:
+   Firebase Console
+   → Project Settings
+   → Your apps
+   → Web app
+   ============================================================ */
+
+const firebaseConfig = {
+
+    apiKey: "AIzaSyAvyqSmZwcuMagNdsjVUtv9sim82SlGgKw",
+
+    authDomain:
+        "smart-guided-shoes.firebaseapp.com",
+
+    databaseURL:
+        "https://smart-guided-shoes-default-rtdb.firebaseio.com",
+
+    projectId:
+        "smart-guided-shoes",
+
+    messagingSenderId:
+        "191076424658",
+
+    appId:
+        "1:191076424658:web:1671fd13050ee5b0a6860b"
+};
+
+
+/* ============================================================
+   GOOGLE MAPS API KEY
+   ============================================================ */
+
+const GOOGLE_MAPS_API_KEY =
+    "PASTE_GOOGLE_MAPS_API_KEY";
+
+
+/* ============================================================
+   DEVICE
+   ============================================================ */
+
+const DEVICE_PATH =
+    "devices/smartShoes01";
+
+
+/* ============================================================
+   FIREBASE INITIALIZATION
+   ============================================================ */
+
+firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
+
+const db = firebase.database();
+
+
+/* ============================================================
+   GLOBAL VARIABLES
+   ============================================================ */
+
+let map = null;
+
+let currentMarker = null;
+
+let destinationMarker = null;
+
+let routePolyline = null;
+
+let selectedDestination = null;
+
+let currentPosition = null;
+
+let route = null;
+
+let routeSteps = [];
+
+let activeStepIndex = 0;
+
+let routePath = [];
+
+let routeStarted = false;
+
+let arrivalShown = false;
+
+let lastRerouteTime = 0;
+
+let autocomplete = null;
+
+let mapReady = false;
+
+let routesReady = false;
+
+
+/* ============================================================
+   AUTHENTICATION
+   ============================================================ */
+
+auth.signInAnonymously()
+
+.then(() => {
+
+    document.getElementById("connectionStatus").innerText =
+        "Firebase Connected";
+
+    document.getElementById("connectionStatus").style.background =
+        "#16a34a";
+
+    startFirebaseListeners();
+
+})
+
+.catch(error => {
+
+    console.error(error);
+
+    document.getElementById("connectionStatus").innerText =
+        "Firebase Error";
+
+    document.getElementById("connectionStatus").style.background =
+        "#dc2626";
+
+});
+
+
+/* ============================================================
+   GOOGLE MAPS INITIALIZATION
+   ============================================================ */
+
+async function initMap() {
+
+    try {
+
+        const { Map } =
+            await google.maps.importLibrary("maps");
+
+        const { Route } =
+            await google.maps.importLibrary("routes");
+
+        const { places } =
+            await google.maps.importLibrary("places");
+
+        routesReady = true;
+
+        map = new Map(
+            document.getElementById("map"),
+            {
+                center: {
+                    lat: 24.8607,
+                    lng: 67.0011
+                },
+
+                zoom: 15,
+
+                mapTypeControl: true,
+
+                streetViewControl: false,
+
+                fullscreenControl: true
+            }
+        );
+
+        mapReady = true;
+
+
+        /* ------------------------------------------
+           SEARCH BOX
+           ------------------------------------------ */
+
+        autocomplete =
+            new google.maps.places.Autocomplete(
+                document.getElementById(
+                    "destinationSearch"
+                ),
+                {
+                    fields: [
+                        "geometry",
+                        "name",
+                        "formatted_address"
+                    ]
+                }
+            );
+
+
+        autocomplete.addListener(
+            "place_changed",
+            () => {
+
+                const place =
+                    autocomplete.getPlace();
+
+                if (
+                    !place.geometry ||
+                    !place.geometry.location
+                ) {
+
+                    alert(
+                        "Please select a valid destination."
+                    );
+
+                    return;
+                }
+
+                selectedDestination = {
+
+                    lat:
+                        place.geometry.location.lat(),
+
+                    lng:
+                        place.geometry.location.lng(),
+
+                    name:
+                        place.name ||
+                        place.formatted_address ||
+                        "Destination"
+
+                };
+
+                showDestination();
+
+            }
+        );
+
+
+        /* ------------------------------------------
+           MAP CLICK DESTINATION
+           ------------------------------------------ */
+
+        map.addListener("click", event => {
+
+            selectedDestination = {
+
+                lat: event.latLng.lat(),
+
+                lng: event.latLng.lng(),
+
+                name: "Map destination"
+
+            };
+
+            showDestination();
+
+        });
+
+
+        console.log(
+            "Google Maps + Routes initialized"
+        );
+
     }
-  });
-}
 
-function loadGoogleMaps(key){
-  const s = document.createElement('script');
-  s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&callback=initMap`;
-  s.async = true;
-  document.head.appendChild(s);
-}
+    catch(error) {
 
-function dotIcon(color){
-  return { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: color, fillOpacity: 1,
-           strokeColor: '#fff', strokeWeight: 2 };
-}
+        console.error(
+            "Google Maps initialization error:",
+            error
+        );
 
-function initMap(){
-  mapsLoaded = true;
-  map = new google.maps.Map(document.getElementById('map'), {
-    center: {lat: 20, lng: 0}, zoom: 3, disableDefaultUI: false,
-    styles: [{elementType:'geometry',stylers:[{color:'#1b1e25'}]},
-             {elementType:'labels.text.fill',stylers:[{color:'#8b90a0'}]},
-             {elementType:'labels.text.stroke',stylers:[{color:'#0b0c10'}]},
-             {featureType:'road',elementType:'geometry',stylers:[{color:'#2a2e38'}]},
-             {featureType:'water',elementType:'geometry',stylers:[{color:'#0f1420'}]}]
-  });
-  map.addListener('click', e=>{
-    pickedLatLng = e.latLng;
-    if(pickedMarker) pickedMarker.setMap(null);
-    pickedMarker = new google.maps.Marker({position: pickedLatLng, map, icon: dotIcon('#fbbf24')});
-    document.getElementById('destInfo').textContent =
-      `Pin dropped at ${pickedLatLng.lat().toFixed(6)}, ${pickedLatLng.lng().toFixed(6)} - tap "Set Destination" to confirm.`;
-  });
-
-  const searchInput = document.getElementById('searchInput');
-  const autocomplete = new google.maps.places.Autocomplete(searchInput);
-  autocomplete.bindTo('bounds', map);
-  autocomplete.addListener('place_changed', ()=>{
-    const place = autocomplete.getPlace();
-    if(!place.geometry || !place.geometry.location) return;
-    pickedLatLng = place.geometry.location;
-    if(pickedMarker) pickedMarker.setMap(null);
-    pickedMarker = new google.maps.Marker({position: pickedLatLng, map, icon: dotIcon('#fbbf24')});
-    map.setCenter(pickedLatLng);
-    map.setZoom(16);
-    document.getElementById('destInfo').textContent =
-      `Selected: ${place.formatted_address || place.name} - tap "Set Destination" to confirm.`;
-  });
-}
-
-function clearPickedPin(){
-  if(pickedMarker){ pickedMarker.setMap(null); pickedMarker=null; }
-  pickedLatLng = null;
-  document.getElementById('destInfo').textContent = 'No destination set.';
-}
-
-function sendCommand(action, destination){
-  const body = { action, updatedAt: Date.now() };
-  if(destination) body.destination = destination;
-  db.ref(`${DEVICE_PATH}/command`).set(body);
-}
-
-function confirmDestination(){
-  if(!pickedLatLng){ alert('Tap the map first to drop a pin.'); return; }
-  const dest = { lat: pickedLatLng.lat(), lng: pickedLatLng.lng() };
-  sendCommand('start', dest);
-  document.getElementById('destInfo').textContent = `Destination sent: ${dest.lat.toFixed(6)}, ${dest.lng.toFixed(6)}`;
-}
-
-function setPill(id, alert, warnText, okText){
-  const el = document.getElementById(id);
-  el.textContent = alert ? warnText : okText;
-  el.className = 'pill ' + (alert ? 'warn' : 'ok');
-}
-
-function bindListeners(){
-  db.ref(`${DEVICE_PATH}/session`).on('value', snap=>{
-    const s = snap.val();
-    if(!s) return;
-    const pill = document.getElementById('statusPill');
-    const labels = {waiting_for_gps:['Waiting for GPS','wait'], position_locked:['Position locked','ok'],
-      destination_selected:['Destination set','ok'], navigating:['Navigating','ok'],
-      arrived:['Arrived','ok'], stopped:['Stopped','wait']};
-    const [text, cls] = labels[s.status] || [s.status, 'wait'];
-    pill.textContent = text; pill.className = 'pill ' + cls;
-    document.getElementById('statusMsg').textContent = s.message || '-';
-
-    if(mapsLoaded && s.start){
-      const p = {lat: s.start.lat, lng: s.start.lng};
-      if(!map.getCenter || map.getZoom() <= 3) map.setCenter(p);
+        alert(
+            "Google Maps failed to initialize. Check your Google Maps API key and enabled APIs."
+        );
     }
-    if(mapsLoaded && s.destination){
-      const p = {lat: s.destination.lat, lng: s.destination.lng};
-      if(!destMarker) destMarker = new google.maps.Marker({position:p, map, icon: dotIcon('#f87171')});
-      else destMarker.setPosition(p);
-    } else if(destMarker){
-      destMarker.setMap(null); destMarker = null;
+}
+
+
+/* ============================================================
+   DESTINATION MARKER
+   ============================================================ */
+
+function showDestination() {
+
+    if (!map || !selectedDestination) {
+        return;
     }
 
-    if(s.arrival) showArrivedModal();
-  });
 
-  db.ref(`${DEVICE_PATH}/telemetry`).on('value', snap=>{
-    const t = snap.val();
-    if(!t) return;
-    document.getElementById('satCount').textContent = t.satellites ?? '-';
-    document.getElementById('distVal').textContent = t.distanceMeters > 0 ? t.distanceMeters.toFixed(1)+' m' : '-';
-    document.getElementById('destValidVal').textContent = t.destinationValid ? 'Yes' : 'No';
-    document.getElementById('speedVal').textContent = t.gpsSpeedKmh != null && t.gpsSpeedKmh >= 0 ? t.gpsSpeedKmh.toFixed(1)+' km/h' : '-';
-    document.getElementById('courseValidVal').textContent = t.gpsCourseValid ? 'Yes' : 'No (need to be moving)';
-    document.getElementById('headingErrVal').textContent = t.headingErrorDeg != null ? t.headingErrorDeg.toFixed(0)+'°' : '-';
-    setPill('obstaclePill', t.obstacle, 'Obstacle!', 'Clear');
-    document.getElementById('rawDistVal').textContent = t.distanceCm != null ? t.distanceCm.toFixed(0)+' cm' : '-';
-    setPill('waterPill', t.water, 'Water!', 'Dry');
-    setPill('fallPill', t.fall, 'Fall detected!', 'None');
-    document.getElementById('stepVal').textContent = t.stepsToday ?? 0;
+    if (destinationMarker) {
 
-    if(mapsLoaded && t.gpsFix && t.latitude){
-      const p = {lat: t.latitude, lng: t.longitude};
-      if(!currentMarker){
-        currentMarker = new google.maps.Marker({position:p, map, icon: dotIcon('#3b82f6'), zIndex: 999});
-        map.setCenter(p); map.setZoom(17);
-      } else {
-        currentMarker.setPosition(p);
-        if(document.getElementById('followToggle').checked) map.panTo(p);
-      }
+        destinationMarker.setMap(null);
+
     }
-  });
+
+
+    destinationMarker =
+        new google.maps.Marker({
+
+            position: {
+
+                lat: selectedDestination.lat,
+
+                lng: selectedDestination.lng
+
+            },
+
+            map: map,
+
+            title: selectedDestination.name,
+
+            animation:
+                google.maps.Animation.DROP
+
+        });
+
+
+    map.panTo(
+        destinationMarker.getPosition()
+    );
+
+
+    document.getElementById(
+        "destinationText"
+    ).innerText =
+        selectedDestination.name;
+
 }
 
-function showArrivedModal(){
-  if(arrivedShown) return;
-  arrivedShown = true;
-  document.getElementById('arrivedModal').style.display = 'flex';
+
+/* ============================================================
+   SET DESTINATION
+   ============================================================ */
+
+async function useSelectedDestination() {
+
+    if (!selectedDestination) {
+
+        alert(
+            "Search for a destination or click on the map first."
+        );
+
+        return;
+    }
+
+
+    if (!currentPosition) {
+
+        alert(
+            "Waiting for GPS position from the shoes."
+        );
+
+        return;
+    }
+
+
+    if (!routesReady) {
+
+        alert(
+            "Google Routes library is not ready."
+        );
+
+        return;
+    }
+
+
+    document.getElementById(
+        "instruction"
+    ).innerText =
+        "Calculating walking route...";
+
+
+    try {
+
+        await calculateRoute();
+
+        await sendCommand(
+
+            "start",
+
+            {
+
+                lat:
+                    selectedDestination.lat,
+
+                lng:
+                    selectedDestination.lng
+
+            }
+
+        );
+
+        routeStarted = true;
+
+        arrivalShown = false;
+
+        document.getElementById(
+            "instruction"
+        ).innerText =
+            "Navigation started.";
+
+    }
+
+    catch(error) {
+
+        console.error(error);
+
+        alert(
+            "Could not calculate route."
+        );
+
+    }
+
 }
 
-function handleArrival(shouldSave){
-  if(shouldSave){
-    const name = document.getElementById('placeName').value.trim() || 'Unnamed place';
-    db.ref(`${DEVICE_PATH}/session/destination`).once('value').then(snap=>{
-      const d = snap.val();
-      if(d) db.ref('savedPlaces').push({name, lat:d.lat, lng:d.lng, added_at: Date.now()});
+
+/* ============================================================
+   CALCULATE WALKING ROUTE
+   ============================================================ */
+
+async function calculateRoute() {
+
+    const { Route } =
+        await google.maps.importLibrary(
+            "routes"
+        );
+
+
+    const result =
+        await Route.computeRoutes({
+
+            origin: {
+
+                lat:
+                    currentPosition.lat,
+
+                lng:
+                    currentPosition.lng
+
+            },
+
+            destination: {
+
+                lat:
+                    selectedDestination.lat,
+
+                lng:
+                    selectedDestination.lng
+
+            },
+
+            travelMode:
+                "WALKING",
+
+            fields: [
+
+                "routes.path",
+
+                "routes.legs",
+
+                "routes.viewport",
+
+                "routes.distanceMeters",
+
+                "routes.durationMillis"
+
+            ],
+
+            polylineQuality:
+                "HIGH_QUALITY"
+
+        });
+
+
+    if (
+        !result.routes ||
+        result.routes.length === 0
+    ) {
+
+        throw new Error(
+            "No walking route returned."
+        );
+
+    }
+
+
+    route = result.routes[0];
+
+
+    routePath =
+        route.path || [];
+
+
+    routeSteps =
+        route.legs &&
+        route.legs.length > 0
+            ? route.legs[0].steps || []
+            : [];
+
+
+    activeStepIndex = 0;
+
+
+    drawRoute();
+
+
+    displayRouteSteps();
+
+
+    if (route.viewport) {
+
+        map.fitBounds(
+            route.viewport
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   DRAW ROUTE
+   ============================================================ */
+
+function drawRoute() {
+
+    if (routePolyline) {
+
+        routePolyline.setMap(null);
+
+    }
+
+
+    routePolyline =
+        new google.maps.Polyline({
+
+            path: routePath,
+
+            geodesic: true,
+
+            strokeOpacity: 0.9,
+
+            strokeWeight: 6,
+
+            map: map
+
+        });
+
+}
+
+
+/* ============================================================
+   DISPLAY ROUTE STEPS
+   ============================================================ */
+
+function displayRouteSteps() {
+
+    const list =
+        document.getElementById(
+            "stepsList"
+        );
+
+
+    list.innerHTML = "";
+
+
+    routeSteps.forEach(
+        (step, index) => {
+
+            const div =
+                document.createElement(
+                    "div"
+                );
+
+
+            div.className =
+                "step-item";
+
+
+            div.id =
+                "route-step-" + index;
+
+
+            const distance =
+                step.distanceMeters || 0;
+
+
+            div.innerHTML =
+
+                `<b>${index + 1}.</b>
+                 ${step.instructions || "Continue"}
+                 <br>
+                 <small>
+                 ${Math.round(distance)} m
+                 </small>`;
+
+
+            list.appendChild(div);
+
+        }
+    );
+
+}
+
+
+/* ============================================================
+   FIND CURRENT NAVIGATION STEP
+   ============================================================ */
+
+function updateNavigationStep() {
+
+    if (
+        !routeStarted ||
+        !routeSteps.length ||
+        !currentPosition
+    ) {
+
+        return;
+
+    }
+
+
+    let bestIndex =
+        activeStepIndex;
+
+    let bestDistance =
+        Infinity;
+
+
+    /*
+       Find nearest step endpoint.
+    */
+
+    for (
+        let i = activeStepIndex;
+        i < routeSteps.length;
+        i++
+    ) {
+
+        const step =
+            routeSteps[i];
+
+
+        if (
+            !step.endLocation ||
+            !step.endLocation.latLng
+        ) {
+
+            continue;
+
+        }
+
+
+        const pos =
+            step.endLocation.latLng;
+
+
+        const d =
+            distanceMeters(
+
+                currentPosition.lat,
+
+                currentPosition.lng,
+
+                pos.lat(),
+
+                pos.lng()
+
+            );
+
+
+        if (d < bestDistance) {
+
+            bestDistance = d;
+
+            bestIndex = i;
+
+        }
+
+    }
+
+
+    /*
+       If we're close to the end of the current step,
+       move to the next step.
+    */
+
+    const currentStep =
+        routeSteps[activeStepIndex];
+
+
+    if (
+        currentStep &&
+        currentStep.endLocation &&
+        currentStep.endLocation.latLng
+    ) {
+
+        const end =
+            currentStep.endLocation.latLng;
+
+
+        const d =
+            distanceMeters(
+
+                currentPosition.lat,
+
+                currentPosition.lng,
+
+                end.lat(),
+
+                end.lng()
+
+            );
+
+
+        if (
+            d < 12 &&
+            activeStepIndex <
+                routeSteps.length - 1
+        ) {
+
+            activeStepIndex++;
+
+        }
+
+    }
+
+
+    /*
+       Prevent jumping backwards.
+    */
+
+    if (
+        bestIndex >
+        activeStepIndex
+    ) {
+
+        activeStepIndex =
+            bestIndex;
+
+    }
+
+
+    const step =
+        routeSteps[activeStepIndex];
+
+
+    if (!step) {
+        return;
+    }
+
+
+    let direction =
+        maneuverToDirection(
+            step.maneuver
+        );
+
+
+    let instruction =
+        step.instructions ||
+        "Continue straight";
+
+
+    let distanceToTurn =
+        getDistanceToStepEnd(
+            step
+        );
+
+
+    document.getElementById(
+        "direction"
+    ).innerText =
+        direction;
+
+
+    document.getElementById(
+        "instruction"
+    ).innerText =
+        instruction;
+
+
+    document.getElementById(
+        "turnDistance"
+    ).innerText =
+        Math.round(distanceToTurn) +
+        " m to next instruction";
+
+
+    highlightStep(
+        activeStepIndex
+    );
+
+
+    /*
+       Send navigation command to ESP32.
+    */
+
+    sendNavigation(
+        direction,
+        instruction,
+        distanceToTurn
+    );
+
+
+    /*
+       Arrival
+    */
+
+    if (
+        selectedDestination &&
+        distanceMeters(
+
+            currentPosition.lat,
+
+            currentPosition.lng,
+
+            selectedDestination.lat,
+
+            selectedDestination.lng
+
+        ) < 12
+    ) {
+
+        handleArrival();
+
+    }
+
+}
+
+
+/* ============================================================
+   MANEUVER → PHYSICAL DIRECTION
+   ============================================================ */
+
+function maneuverToDirection(
+    maneuver
+) {
+
+    if (!maneuver) {
+
+        return "STRAIGHT";
+
+    }
+
+
+    const m =
+        maneuver.toUpperCase();
+
+
+    if (
+        m.includes("UTURN_LEFT") ||
+        m.includes("TURN_LEFT") ||
+        m.includes("SLIGHT_LEFT") ||
+        m.includes("SHARP_LEFT") ||
+        m.includes("ROUNDABOUT_LEFT") ||
+        m.includes("KEEP_LEFT")
+    ) {
+
+        return "LEFT";
+
+    }
+
+
+    if (
+        m.includes("UTURN_RIGHT") ||
+        m.includes("TURN_RIGHT") ||
+        m.includes("SLIGHT_RIGHT") ||
+        m.includes("SHARP_RIGHT") ||
+        m.includes("ROUNDABOUT_RIGHT") ||
+        m.includes("KEEP_RIGHT")
+    ) {
+
+        return "RIGHT";
+
+    }
+
+
+    if (
+        m.includes("ARRIVE")
+    ) {
+
+        return "ARRIVED";
+
+    }
+
+
+    return "STRAIGHT";
+
+}
+
+
+/* ============================================================
+   DISTANCE TO STEP END
+   ============================================================ */
+
+function getDistanceToStepEnd(
+    step
+) {
+
+    if (
+        !step ||
+        !step.endLocation ||
+        !step.endLocation.latLng ||
+        !currentPosition
+    ) {
+
+        return 0;
+
+    }
+
+
+    const p =
+        step.endLocation.latLng;
+
+
+    return distanceMeters(
+
+        currentPosition.lat,
+
+        currentPosition.lng,
+
+        p.lat(),
+
+        p.lng()
+
+    );
+
+}
+
+
+/* ============================================================
+   HIGHLIGHT CURRENT STEP
+   ============================================================ */
+
+function highlightStep(index) {
+
+    document
+        .querySelectorAll(".step-item")
+        .forEach(
+            el =>
+                el.classList.remove(
+                    "active-step"
+                )
+        );
+
+
+    const element =
+        document.getElementById(
+            "route-step-" + index
+        );
+
+
+    if (element) {
+
+        element.classList.add(
+            "active-step"
+        );
+
+        element.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest"
+        });
+
+    }
+
+}
+
+
+/* ============================================================
+   FIREBASE COMMAND
+   ============================================================ */
+
+async function sendCommand(
+    action,
+    destination = null
+) {
+
+    const data = {
+
+        action:
+            action,
+
+        updatedAt:
+            firebase.database.ServerValue.TIMESTAMP
+
+    };
+
+
+    if (destination) {
+
+        data.destination =
+            destination;
+
+    }
+
+
+    await db.ref(
+        DEVICE_PATH +
+        "/command"
+    ).set(data);
+
+}
+
+
+/* ============================================================
+   FIREBASE NAVIGATION
+   ============================================================ */
+
+async function sendNavigation(
+    direction,
+    instruction,
+    distanceToTurn
+) {
+
+    await db.ref(
+        DEVICE_PATH +
+        "/navigation"
+    ).set({
+
+        active:
+            routeStarted,
+
+        direction:
+            direction,
+
+        instruction:
+            instruction,
+
+        distanceToTurn:
+            distanceToTurn,
+
+        arrived:
+            false,
+
+        updatedAt:
+            firebase.database.ServerValue.TIMESTAMP
+
     });
-  }
-  document.getElementById('arrivedModal').style.display = 'none';
-  document.getElementById('placeName').value = '';
-  arrivedShown = false;
-  sendCommand('reset'); // per this firmware's state machine, a new trip needs reset -> re-lock GPS -> start
+
 }
 
-initApp();
+
+/* ============================================================
+   STOP
+   ============================================================ */
+
+async function stopNavigation() {
+
+    routeStarted = false;
+
+
+    await sendCommand(
+        "stop"
+    );
+
+
+    await db.ref(
+        DEVICE_PATH +
+        "/navigation"
+    ).update({
+
+        active: false,
+
+        direction: "STOP",
+
+        instruction:
+            "Navigation stopped.",
+
+        arrived: false
+
+    });
+
+
+    document.getElementById(
+        "direction"
+    ).innerText =
+        "STOP";
+
+
+    document.getElementById(
+        "instruction"
+    ).innerText =
+        "Navigation stopped.";
+
+}
+
+
+/* ============================================================
+   RESET
+   ============================================================ */
+
+async function resetNavigation() {
+
+    routeStarted = false;
+
+    selectedDestination = null;
+
+    route = null;
+
+    routeSteps = [];
+
+    activeStepIndex = 0;
+
+
+    if (routePolyline) {
+
+        routePolyline.setMap(null);
+
+        routePolyline = null;
+
+    }
+
+
+    if (destinationMarker) {
+
+        destinationMarker.setMap(null);
+
+        destinationMarker = null;
+
+    }
+
+
+    await sendCommand(
+        "reset"
+    );
+
+
+    await db.ref(
+        DEVICE_PATH +
+        "/navigation"
+    ).set({
+
+        active: false,
+
+        direction: "WAIT",
+
+        instruction:
+            "Waiting for destination.",
+
+        distanceToTurn: 0,
+
+        arrived: false
+
+    });
+
+
+    document.getElementById(
+        "destinationText"
+    ).innerText =
+        "Not selected";
+
+
+    document.getElementById(
+        "stepsList"
+    ).innerHTML =
+        "No route loaded.";
+
+}
+
+
+/* ============================================================
+   CLEAR DESTINATION
+   ============================================================ */
+
+function clearDestination() {
+
+    selectedDestination = null;
+
+
+    if (destinationMarker) {
+
+        destinationMarker.setMap(null);
+
+        destinationMarker = null;
+
+    }
+
+
+    document.getElementById(
+        "destinationText"
+    ).innerText =
+        "Not selected";
+
+}
+
+
+/* ============================================================
+   FIREBASE LISTENERS
+   ============================================================ */
+
+function startFirebaseListeners() {
+
+
+    /* ------------------------------------------
+       TELEMETRY
+       ------------------------------------------ */
+
+    db.ref(
+        DEVICE_PATH +
+        "/telemetry"
+    ).on(
+        "value",
+        snapshot => {
+
+            const t =
+                snapshot.val();
+
+            if (!t) {
+                return;
+            }
+
+            processTelemetry(t);
+
+        }
+    );
+
+
+    /* ------------------------------------------
+       SESSION
+       ------------------------------------------ */
+
+    db.ref(
+        DEVICE_PATH +
+        "/session"
+    ).on(
+        "value",
+        snapshot => {
+
+            const s =
+                snapshot.val();
+
+            if (!s) {
+                return;
+            }
+
+
+            if (
+                s.status === "arrived" &&
+                !arrivalShown
+            ) {
+
+                handleArrival();
+
+            }
+
+        }
+    );
+
+
+    /* ------------------------------------------
+       SAVED PLACES
+       ------------------------------------------ */
+
+    db.ref(
+        "savedPlaces"
+    ).on(
+        "value",
+        snapshot => {
+
+            displaySavedPlaces(
+                snapshot.val()
+            );
+
+        }
+    );
+
+}
+
+
+/* ============================================================
+   TELEMETRY
+   ============================================================ */
+
+function processTelemetry(t) {
+
+    const lat =
+        Number(t.latitude);
+
+
+    const lng =
+        Number(t.longitude);
+
+
+    const gpsFix =
+        !!t.gpsFix;
+
+
+    document.getElementById(
+        "gpsStatus"
+    ).innerText =
+        gpsFix ? "FIXED" : "NO FIX";
+
+
+    document.getElementById(
+        "satellites"
+    ).innerText =
+        t.satellites ?? 0;
+
+
+    document.getElementById(
+        "latitude"
+    ).innerText =
+        gpsFix
+            ? lat.toFixed(6)
+            : "—";
+
+
+    document.getElementById(
+        "longitude"
+    ).innerText =
+        gpsFix
+            ? lng.toFixed(6)
+            : "—";
+
+
+    document.getElementById(
+        "speed"
+    ).innerText =
+        Number(
+            t.gpsSpeedKmh || 0
+        ).toFixed(1) +
+        " km/h";
+
+
+    document.getElementById(
+        "steps"
+    ).innerText =
+        t.stepsToday ?? 0;
+
+
+    document.getElementById(
+        "obstacleDistance"
+    ).innerText =
+        t.distanceCm != null
+            ? Math.round(t.distanceCm) +
+              " cm"
+            : "—";
+
+
+    document.getElementById(
+        "obstacleStatus"
+    ).innerText =
+        t.obstacle
+            ? "⚠ OBSTACLE"
+            : "Clear";
+
+
+    document.getElementById(
+        "obstacleBox"
+    ).className =
+        t.obstacle
+            ? "status-box warning"
+            : "status-box good";
+
+
+    document.getElementById(
+        "waterStatus"
+    ).innerText =
+        t.water
+            ? "⚠ WATER DETECTED"
+            : "Dry";
+
+
+    document.getElementById(
+        "waterBox"
+    ).className =
+        t.water
+            ? "status-box warning"
+            : "status-box good";
+
+
+    document.getElementById(
+        "fallStatus"
+    ).innerText =
+        t.fall
+            ? "⚠ FALL DETECTED"
+            : "Normal";
+
+
+    document.getElementById(
+        "fallBox"
+    ).className =
+        t.fall
+            ? "status-box warning"
+            : "status-box good";
+
+
+    if (!gpsFix) {
+        return;
+    }
+
+
+    currentPosition = {
+
+        lat: lat,
+
+        lng: lng
+
+    };
+
+
+    updateCurrentMarker();
+
+
+    if (
+        selectedDestination
+    ) {
+
+        const d =
+            distanceMeters(
+
+                lat,
+
+                lng,
+
+                selectedDestination.lat,
+
+                selectedDestination.lng
+
+            );
+
+
+        document.getElementById(
+            "destinationDistance"
+        ).innerText =
+            Math.round(d) +
+            " m";
+
+
+        if (
+            routeStarted
+        ) {
+
+            checkOffRoute();
+
+            updateNavigationStep();
+
+        }
+
+    }
+
+}
+
+
+/* ============================================================
+   CURRENT GPS MARKER
+   ============================================================ */
+
+function updateCurrentMarker() {
+
+    if (!map || !currentPosition) {
+        return;
+    }
+
+
+    const position = {
+
+        lat:
+            currentPosition.lat,
+
+        lng:
+            currentPosition.lng
+
+    };
+
+
+    if (!currentMarker) {
+
+        currentMarker =
+            new google.maps.Marker({
+
+                position: position,
+
+                map: map,
+
+                title:
+                    "Smart Shoes",
+
+                icon: {
+
+                    path:
+                        google.maps.SymbolPath
+                            .CIRCLE,
+
+                    scale: 9,
+
+                    fillColor:
+                        "#2563eb",
+
+                    fillOpacity: 1,
+
+                    strokeColor:
+                        "#ffffff",
+
+                    strokeWeight: 2
+
+                }
+
+            });
+
+    }
+
+    else {
+
+        currentMarker.setPosition(
+            position
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   OFF ROUTE DETECTION
+   ============================================================ */
+
+function checkOffRoute() {
+
+    if (
+        !routeStarted ||
+        !routePath.length ||
+        !currentPosition
+    ) {
+
+        return;
+
+    }
+
+
+    let minimum =
+        Infinity;
+
+
+    for (
+        const point of routePath
+    ) {
+
+        let p;
+
+
+        if (
+            typeof point.lat === "function"
+        ) {
+
+            p = {
+
+                lat:
+                    point.lat(),
+
+                lng:
+                    point.lng()
+
+            };
+
+        }
+
+        else {
+
+            p = {
+
+                lat:
+                    point.lat,
+
+                lng:
+                    point.lng
+
+            };
+
+        }
+
+
+        const d =
+            distanceMeters(
+
+                currentPosition.lat,
+
+                currentPosition.lng,
+
+                p.lat,
+
+                p.lng
+
+            );
+
+
+        if (d < minimum) {
+
+            minimum = d;
+
+        }
+
+    }
+
+
+    /*
+       GPS can naturally fluctuate.
+
+       We use 35 m as the initial
+       rerouting threshold.
+    */
+
+    if (
+        minimum > 35
+    ) {
+
+        const now =
+            Date.now();
+
+
+        if (
+            now - lastRerouteTime >
+            15000
+        ) {
+
+            lastRerouteTime =
+                now;
+
+
+            document.getElementById(
+                "instruction"
+            ).innerText =
+                "Off route. Recalculating...";
+
+
+            calculateRoute()
+                .then(() => {
+
+                    document.getElementById(
+                        "instruction"
+                    ).innerText =
+                        "New route calculated.";
+
+                })
+                .catch(error => {
+
+                    console.error(
+                        error
+                    );
+
+                });
+
+        }
+
+    }
+
+}
+
+
+/* ============================================================
+   ARRIVAL
+   ============================================================ */
+
+async function handleArrival() {
+
+    if (arrivalShown) {
+        return;
+    }
+
+
+    arrivalShown = true;
+
+    routeStarted = false;
+
+
+    document.getElementById(
+        "direction"
+    ).innerText =
+        "ARRIVED";
+
+
+    document.getElementById(
+        "instruction"
+    ).innerText =
+        "You have reached your destination.";
+
+
+    await db.ref(
+        DEVICE_PATH +
+        "/navigation"
+    ).update({
+
+        active: false,
+
+        direction:
+            "ARRIVED",
+
+        instruction:
+            "Destination reached.",
+
+        distanceToTurn: 0,
+
+        arrived: true
+
+    });
+
+
+    document.getElementById(
+        "arrivalModal"
+    ).style.display =
+        "flex";
+
+}
+
+
+/* ============================================================
+   SAVE ARRIVAL PLACE
+   ============================================================ */
+
+async function saveArrivalPlace() {
+
+    const name =
+        document.getElementById(
+            "savePlaceName"
+        ).value.trim();
+
+
+    if (!name) {
+
+        alert(
+            "Enter a name."
+        );
+
+        return;
+
+    }
+
+
+    if (!selectedDestination) {
+
+        closeArrivalModal();
+
+        return;
+
+    }
+
+
+    await db.ref(
+        "savedPlaces"
+    ).push({
+
+        name: name,
+
+        lat:
+            selectedDestination.lat,
+
+        lng:
+            selectedDestination.lng,
+
+        createdAt:
+            firebase.database.ServerValue.TIMESTAMP
+
+    });
+
+
+    closeArrivalModal();
+
+    await resetNavigation();
+
+}
+
+
+/* ============================================================
+   CLOSE ARRIVAL MODAL
+   ============================================================ */
+
+function closeArrivalModal() {
+
+    document.getElementById(
+        "arrivalModal"
+    ).style.display =
+        "none";
+
+}
+
+
+/* ============================================================
+   SAVED PLACES
+   ============================================================ */
+
+function displaySavedPlaces(
+    places
+) {
+
+    const container =
+        document.getElementById(
+            "savedPlaces"
+        );
+
+
+    container.innerHTML = "";
+
+
+    if (!places) {
+
+        container.innerText =
+            "No saved places.";
+
+        return;
+
+    }
+
+
+    Object.entries(
+        places
+    ).forEach(
+        ([id, place]) => {
+
+            const div =
+                document.createElement(
+                    "div"
+                );
+
+
+            div.className =
+                "saved-place";
+
+
+            div.innerHTML = `
+
+                <span>
+                    <b>${escapeHtml(place.name)}</b>
+                </span>
+
+                <button
+                    class="primary"
+                    onclick="
+                        selectSavedPlace(
+                            ${place.lat},
+                            ${place.lng},
+                            '${escapeJs(place.name)}'
+                        )
+                    "
+                >
+                    Go
+                </button>
+
+            `;
+
+
+            container.appendChild(
+                div
+            );
+
+        }
+    );
+
+}
+
+
+/* ============================================================
+   SELECT SAVED PLACE
+   ============================================================ */
+
+function selectSavedPlace(
+    lat,
+    lng,
+    name
+) {
+
+    selectedDestination = {
+
+        lat: Number(lat),
+
+        lng: Number(lng),
+
+        name: name
+
+    };
+
+
+    showDestination();
+
+}
+
+
+/* ============================================================
+   HAVERSINE DISTANCE
+   ============================================================ */
+
+function distanceMeters(
+    lat1,
+    lon1,
+    lat2,
+    lon2
+) {
+
+    const R =
+        6371000;
+
+
+    const p1 =
+        lat1 *
+        Math.PI / 180;
+
+
+    const p2 =
+        lat2 *
+        Math.PI / 180;
+
+
+    const dp =
+        (lat2 - lat1) *
+        Math.PI / 180;
+
+
+    const dl =
+        (lon2 - lon1) *
+        Math.PI / 180;
+
+
+    const a =
+        Math.sin(dp / 2) *
+        Math.sin(dp / 2) +
+
+        Math.cos(p1) *
+        Math.cos(p2) *
+
+        Math.sin(dl / 2) *
+        Math.sin(dl / 2);
+
+
+    const c =
+        2 *
+        Math.atan2(
+            Math.sqrt(a),
+            Math.sqrt(1 - a)
+        );
+
+
+    return R * c;
+
+}
+
+
+/* ============================================================
+   SECURITY HELPERS
+   ============================================================ */
+
+function escapeHtml(text) {
+
+    return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+
+}
+
+
+function escapeJs(text) {
+
+    return String(text)
+        .replaceAll("\\", "\\\\")
+        .replaceAll("'", "\\'");
+
+}
+
 </script>
+
+
+<!-- Google Maps -->
+<script
+    async
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCn8XGw1enkySis-ZtMdpGjWuK1kzwx9vc&libraries=places&callback=initMap">
+</script>
+
 </body>
 </html>
